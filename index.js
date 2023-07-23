@@ -36,14 +36,31 @@ io.on('connection', (socket) => {
         const roomId = short.generate();
         console.log('created', roomId);
         rooms[roomId] = {
+            owner: socket.handshake.query.user_id,
             members: [{
                 id: socket.handshake.query.user_id,
                 owner: true,
+                nickname: nickname
             }],
 
         }
         socket.join(roomId)
-        io.to(roomId).emit('room_created', { roomId })
+        io.to(roomId).emit('room_created', { roomId,members:rooms[roomId].members })
+    })
+
+    socket.on('joinRoom',({nickname,roomId})=>{
+        console.log(nickname,roomId);
+        users[socket.handshake.query.user_id] = {
+            name: nickname,
+        }
+        socket.nickname = nickname
+        rooms[roomId].members.push({
+            id:socket.handshake.query.user_id,
+            owner:false,
+            nickname: nickname,
+        })
+        socket.join(roomId);
+        io.to(roomId).emit('room_joined',{roomId,members:rooms[roomId].members})
     })
 
     // socket.on('connec')
