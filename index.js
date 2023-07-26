@@ -14,7 +14,46 @@ const io = new Server(server, {
     }
 })
 const users = []
+/*
+rooms = [
+roomID:{
+    owner:user_id,
+    members:[
+        {
+            id:user_id,
+            owner:true,
+            nickname:nickname
+        }
+    ],
+    players:[
+        {
+            id:user_id,
+            team:team,
+            role:role,
+            name:name
+        }
+    ],
+    teamData:{
+        turn: red | blue,
+        red:{
+            wordsLeft:wordsLeft,
+            hint:hint,
+            hintCount:hintCount,
+        },
+        blue:{
+            wordsLeft:wordsLeft,
+            hint:hint,
+            hintCount:hintCount,
+        }
+    }
+}
+
+
+]
+
+*/
 const rooms = []
+
 
 const findbySocketid = (id) => {
     const res = Object.values(users).find((obj) => {
@@ -28,11 +67,11 @@ io.on('connection', (socket) => {
     users[socket.handshake.query.user_id] = {
         socket_id: socket.id
     }
-    socket.on('createRoom', ({ nickname }) => {
+    socket.on('createRoom', ({ name }) => {
         users[socket.handshake.query.user_id] = {
-            name: nickname,
+            name: name,
         }
-        socket.nickname = nickname
+        socket.nickname = name
         const roomId = short.generate();
         console.log('created', roomId);
         rooms[roomId] = {
@@ -40,27 +79,42 @@ io.on('connection', (socket) => {
             members: [{
                 id: socket.handshake.query.user_id,
                 owner: true,
-                nickname: nickname
+                name: name
             }],
+            players: [],
+            teamData: {}
 
         }
         socket.join(roomId)
-        io.to(roomId).emit('room_created', { roomId,members:rooms[roomId].members })
+        socket.roomID = roomId
+        io.to(roomId).emit('room_created', { roomId, members: rooms[roomId].members })
     })
 
-    socket.on('joinRoom',({nickname,roomId})=>{
-        console.log(nickname,roomId);
+    socket.on('joinRoom', ({ name, roomId }) => {
+        console.log(name, roomId);
         users[socket.handshake.query.user_id] = {
-            name: nickname,
+            name: name,
         }
-        socket.nickname = nickname
+        socket.nickname = name
         rooms[roomId].members.push({
-            id:socket.handshake.query.user_id,
-            owner:false,
-            nickname: nickname,
+            id: socket.handshake.query.user_id,
+            owner: false,
+            name: name,
         })
         socket.join(roomId);
-        io.to(roomId).emit('room_joined',{roomId,members:rooms[roomId].members})
+        socket.roomID = roomId
+        io.to(roomId).emit('room_joined', { roomId, members: rooms[roomId].members })
+    })
+
+    socket.on('join_team', (data) => {
+        console.log(data);
+        rooms[socket.roomID].players.push({
+            id: socket.handshake.query.user_id,
+            team: data.team,
+            role: data.role,
+            name: socket.nickname
+        })
+        io.to(socket.roomID).emit('joined_team', rooms[socket.roomID].players)
     })
 
     // socket.on('connec')
