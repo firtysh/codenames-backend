@@ -117,6 +117,9 @@ io.on('connection', (socket) => {
         io.to(socket.roomID).emit('joined_team', rooms[socket.roomID].players)
     })
 
+    socket.on('start_game',()=>{
+        io.to(socket.roomID).emit('game_started',rooms[socket.roomID].teamData)
+    })
     // socket.on('connec')
 
     socket.on('disconnect', () => {
