@@ -3,6 +3,7 @@ import app from './app.js';
 import short from 'short-uuid';
 
 import { Server } from 'socket.io'
+import generateCardData from './utils/cardDataGenerator.js';
 
 const port = process.env.PORT || 3000;
 
@@ -35,6 +36,7 @@ roomID:{
     ],
     teamData:{
         turn: red | blue,
+        status:
         red:{
             wordsLeft:wordsLeft,
             hint:hint,
@@ -45,7 +47,12 @@ roomID:{
             hint:hint,
             hintCount:hintCount,
         }
-    }
+    },
+    cardData:[{
+        word:string,
+        isOpen:boolean,
+        color:'string
+    }],
 }
 
 
@@ -82,8 +89,8 @@ io.on('connection', (socket) => {
                 name: name
             }],
             players: [],
-            teamData: {}
-
+            teamData: {},
+            cardData:[],
         }
         socket.join(roomId)
         socket.roomID = roomId
@@ -118,7 +125,23 @@ io.on('connection', (socket) => {
     })
 
     socket.on('start_game',()=>{
-        io.to(socket.roomID).emit('game_started',rooms[socket.roomID].teamData)
+        rooms[socket.roomID].cardData = generateCardData();
+        rooms[socket.roomID].teamData = {
+            turn :'red',
+            status : 'Red spymaster is playing...',
+            red:{
+                wordsLeft:9,
+                hint:'',
+                hintCount:null 
+            },
+            blue:{
+                wordsLeft : 8,
+                hint:'',
+                hintCount:null
+            }
+        }
+      
+        io.to(socket.roomID).emit('game_started',{teamData:rooms[socket.roomID].teamData,cardData:rooms[socket.roomID].cardData})
     })
     // socket.on('connec')
 
