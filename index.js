@@ -145,6 +145,16 @@ io.on('connection', (socket) => {
     })
     // socket.on('connec')
 
+    socket.on('cardClicked', (index) => {
+        rooms[socket.roomID].cardData[index].isClicked = !rooms[socket.roomID].cardData[index].isClicked;
+        io.to(socket.roomID).emit('cardClicked', rooms[socket.roomID].cardData)
+    })
+    socket.on('cardFlipped', (data) => {
+        rooms[socket.roomID].cardData[data].isOpen = true;
+        io.to(socket.roomID).emit('cardFlipped', rooms[socket.roomID].cardData)
+    })
+
+
     socket.on('disconnect', () => {
         console.log(rooms);
         console.log(users)
